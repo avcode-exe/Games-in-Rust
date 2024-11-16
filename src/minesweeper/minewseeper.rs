@@ -8,6 +8,47 @@ const WIDTH: usize = 10;
 const HEIGHT: usize = 10;
 const MINES: usize = 10;
 
+fn draw_game_state(
+    minefield: &utils::Minefield,
+    revealed: &Vec<Vec<bool>>,
+    flagged: &Vec<Vec<bool>>,
+    cursor_x: usize,
+    cursor_y: usize,
+) {
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
+            let ch = if cursor_x == x && cursor_y == y {
+                '#'
+            } else if flagged[y][x] {
+                attron(COLOR_PAIR(10));
+                'F'
+            } else if revealed[y][x] {
+                if minefield.grid[y][x] {
+                    attron(COLOR_PAIR(1));
+                    '*'
+                } else {
+                    let count = utils::count_adjacent_mines(&minefield, x, y);
+                    attron(COLOR_PAIR(count as i16 + 1));
+                    std::char::from_digit(count as u32, 10).unwrap_or(' ')
+                }
+            } else {
+                '.'
+            };
+            mvaddch(y as i32, x as i32, ch as u32);
+            attroff(COLOR_PAIR(1));
+            attroff(COLOR_PAIR(2));
+            attroff(COLOR_PAIR(3));
+            attroff(COLOR_PAIR(4));
+            attroff(COLOR_PAIR(5));
+            attroff(COLOR_PAIR(6));
+            attroff(COLOR_PAIR(7));
+            attroff(COLOR_PAIR(8));
+            attroff(COLOR_PAIR(9));
+            attroff(COLOR_PAIR(10));
+        }
+    }
+}
+
 pub fn minesweeper() {
     let minefield = utils::generate_minefield(WIDTH, HEIGHT, MINES);
     let mut revealed = vec![vec![false; WIDTH]; HEIGHT];
@@ -23,7 +64,6 @@ pub fn minesweeper() {
 
     if has_colors() {
         start_color();
-        // Initialize color pairs
         init_pair(1, COLOR_RED, COLOR_BLACK); // Mines
         init_pair(2, COLOR_GREEN, COLOR_BLACK); // 1
         init_pair(3, COLOR_YELLOW, COLOR_BLACK); // 2
@@ -38,38 +78,7 @@ pub fn minesweeper() {
 
     loop {
         clear();
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                let ch = if cursor_x == x && cursor_y == y {
-                    '#'
-                } else if flagged[y][x] {
-                    attron(COLOR_PAIR(10));
-                    'F'
-                } else if revealed[y][x] {
-                    if minefield[y][x] {
-                        attron(COLOR_PAIR(1));
-                        '*'
-                    } else {
-                        let count = utils::count_adjacent_mines(&minefield, x, y);
-                        attron(COLOR_PAIR(count as i16 + 1));
-                        std::char::from_digit(count as u32, 10).unwrap_or(' ')
-                    }
-                } else {
-                    '.'
-                };
-                mvaddch(y as i32, x as i32, ch as u32);
-                attroff(COLOR_PAIR(1));
-                attroff(COLOR_PAIR(2));
-                attroff(COLOR_PAIR(3));
-                attroff(COLOR_PAIR(4));
-                attroff(COLOR_PAIR(5));
-                attroff(COLOR_PAIR(6));
-                attroff(COLOR_PAIR(7));
-                attroff(COLOR_PAIR(8));
-                attroff(COLOR_PAIR(9));
-                attroff(COLOR_PAIR(10));
-            }
-        }
+        draw_game_state(&minefield, &revealed, &flagged, cursor_x, cursor_y);
         refresh();
 
         let input = getch();
@@ -92,18 +101,18 @@ pub fn minesweeper() {
                         cursor_x,
                         cursor_y,
                     );
-                    if minefield[cursor_y][cursor_x] {
+                    if minefield.grid[cursor_y][cursor_x] {
                         let _ = mvprintw(HEIGHT as i32 + 1, 0, "Game Over!");
                         refresh();
                         for y in 0..HEIGHT {
                             for x in 0..WIDTH {
-                                if minefield[y][x] {
+                                if minefield.grid[y][x] {
                                     attron(COLOR_PAIR(1));
                                     mvaddch(y as i32, x as i32, '*' as u32);
                                     attroff(COLOR_PAIR(1));
                                 } else {
                                     let count = utils::count_adjacent_mines(&minefield, x, y);
-                                    let ch = if flagged[y][x] && !minefield[y][x] {
+                                    let ch = if flagged[y][x] && !minefield.grid[y][x] {
                                         'X'
                                     } else {
                                         std::char::from_digit(count as u32, 10).unwrap_or(' ')
@@ -129,18 +138,7 @@ pub fn minesweeper() {
         }
 
         // Check if the player has won
-        let mut won = true;
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                if !minefield[y][x] && !revealed[y][x] {
-                    won = false;
-                    break;
-                }
-            }
-            if !won {
-                break;
-            }
-        }
+        let won = (0..HEIGHT).all(|y| (0..WIDTH).all(|x| minefield.grid[y][x] || revealed[y][x]));
 
         if won {
             let _ = mvprintw(HEIGHT as i32 + 1, 0, "You Won!");

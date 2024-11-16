@@ -7,6 +7,14 @@ mod utils;
 const MAZE_WIDTH: i32 = 31;
 const MAZE_HEIGHT: i32 = 15;
 
+fn draw_game_state(maze: &utils::Maze, player_x: i32, player_y: i32, target_x: i32, target_y: i32) {
+    clear();
+    utils::draw_maze(maze);
+    mvaddch(player_y, player_x, '@' as u32);
+    mvaddch(target_y, target_x, 'X' as u32);
+    refresh();
+}
+
 pub fn maze() {
     initscr();
     noecho();
@@ -22,11 +30,7 @@ pub fn maze() {
     let target_y = MAZE_HEIGHT - 2;
 
     loop {
-        clear();
-        utils::draw_maze(&maze);
-        mvaddch(player_y, player_x, '@' as u32);
-        mvaddch(target_y, target_x, 'X' as u32);
-        refresh();
+        draw_game_state(&maze, player_x, player_y, target_x, target_y);
 
         let input = getch();
 
