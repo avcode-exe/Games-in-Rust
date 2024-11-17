@@ -2,6 +2,7 @@ extern crate ncurses;
 extern crate rand;
 use ncurses::*;
 use std::cmp::min;
+use std::collections::HashSet;
 mod utils;
 
 const WIDTH: usize = 10;
@@ -10,8 +11,8 @@ const MINES: usize = 10;
 
 fn draw_game_state(
     minefield: &utils::Minefield,
-    revealed: &Vec<Vec<bool>>,
-    flagged: &Vec<Vec<bool>>,
+    revealed: &HashSet<(usize, usize)>,
+    flagged: &HashSet<(usize, usize)>,
     cursor_x: usize,
     cursor_y: usize,
 ) {
@@ -19,11 +20,11 @@ fn draw_game_state(
         for x in 0..WIDTH {
             let ch = if cursor_x == x && cursor_y == y {
                 '#'
-            } else if flagged[y][x] {
+            } else if flagged.contains(&(y, x)) {
                 attron(COLOR_PAIR(10));
                 'F'
-            } else if revealed[y][x] {
-                if minefield.grid[y][x] {
+            } else if revealed.contains(&(y, x)) {
+                if minefield.grid.contains(&(x, y)) {
                     attron(COLOR_PAIR(1));
                     '*'
                 } else {
@@ -51,8 +52,8 @@ fn draw_game_state(
 
 pub fn minesweeper() {
     let minefield = utils::generate_minefield(WIDTH, HEIGHT, MINES);
-    let mut revealed = vec![vec![false; WIDTH]; HEIGHT];
-    let mut flagged = vec![vec![false; WIDTH]; HEIGHT];
+    let mut revealed = HashSet::new();
+    let mut flagged = HashSet::new();
     let mut cursor_x = 0;
     let mut cursor_y = 0;
 
@@ -93,7 +94,7 @@ pub fn minesweeper() {
             KEY_LEFT => cursor_x = cursor_x.saturating_sub(1),
             KEY_RIGHT => cursor_x = min(cursor_x + 1, WIDTH - 1),
             10 => {
-                if !flagged[cursor_y][cursor_x] && !revealed[cursor_y][cursor_x] {
+                if !flagged.contains(&(cursor_y, cursor_x)) && !revealed.contains(&(cursor_y, cursor_x)) {
                     utils::reveal_adjacent_zeros(
                         &minefield,
                         &mut revealed,
@@ -101,18 +102,18 @@ pub fn minesweeper() {
                         cursor_x,
                         cursor_y,
                     );
-                    if minefield.grid[cursor_y][cursor_x] {
+                    if minefield.grid.contains(&(cursor_x, cursor_y)) {
                         let _ = mvprintw(HEIGHT as i32 + 1, 0, "Game Over!");
                         refresh();
                         for y in 0..HEIGHT {
                             for x in 0..WIDTH {
-                                if minefield.grid[y][x] {
+                                if minefield.grid.contains(&(x, y)) {
                                     attron(COLOR_PAIR(1));
                                     mvaddch(y as i32, x as i32, '*' as u32);
                                     attroff(COLOR_PAIR(1));
                                 } else {
                                     let count = utils::count_adjacent_mines(&minefield, x, y);
-                                    let ch = if flagged[y][x] && !minefield.grid[y][x] {
+                                    let ch = if flagged.contains(&(y, x)) && !minefield.grid.contains(&(x, y)) {
                                         'X'
                                     } else {
                                         std::char::from_digit(count as u32, 10).unwrap_or(' ')
@@ -130,15 +131,19 @@ pub fn minesweeper() {
                 }
             }
             32 => {
-                if !revealed[cursor_y][cursor_x] {
-                    flagged[cursor_y][cursor_x] = !flagged[cursor_y][cursor_x];
+                if !revealed.contains(&(cursor_y, cursor_x)) {
+                    if flagged.contains(&(cursor_y, cursor_x)) {
+                        flagged.remove(&(cursor_y, cursor_x));
+                    } else {
+                        flagged.insert((cursor_y, cursor_x));
+                    }
                 }
             }
             _ => (),
         }
 
         // Check if the player has won
-        let won = (0..HEIGHT).all(|y| (0..WIDTH).all(|x| minefield.grid[y][x] || revealed[y][x]));
+        let won = (0..HEIGHT).all(|y| (0..WIDTH).all(|x| minefield.grid.contains(&(x, y)) || revealed.contains(&(y, x))));
 
         if won {
             let _ = mvprintw(HEIGHT as i32 + 1, 0, "You Won!");
