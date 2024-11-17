@@ -11,7 +11,7 @@ mod snake_game;
 fn main() {
     let _games = vec![
         ("Maze", maze::maze as fn()),
-        ("Minesweeper", minesweeper::minesweeper as fn()),
+        ("Minesweeper", || minesweeper::minesweeper(10, 10, 10)),
         ("Snake", snake_game::snake_game as fn()),
         ("Quit", || {
             endwin();
