@@ -1,5 +1,4 @@
 extern crate ncurses;
-extern crate serde;
 extern crate rand;
 use ncurses::*;
 mod utils;
@@ -46,7 +45,7 @@ pub fn maze() {
             _ => (player_x, player_y),
         };
 
-        if next_x >= 0 && next_x < MAZE_WIDTH && next_y >= 0 && next_y < MAZE_HEIGHT && maze.grid[next_y as usize][next_x as usize] == 0 {
+        if next_x >= 0 && next_x < MAZE_WIDTH && next_y >= 0 && next_y < MAZE_HEIGHT && maze.grid.contains(&(next_x, next_y)) {
             player_x = next_x;
             player_y = next_y;
         }
