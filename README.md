@@ -10,6 +10,10 @@ The maze game generates a random maze and allows the player to navigate through 
 
 The minesweeper game generates a random board and the player need to flag and reveal each cells using the arrow keys.
 
+## Snake game
+
+The snake game is a simple game where the player controls a snake and tries to eat the food. The snake grows longer as it eats the food.
+
 ## How to Run
 
 - Ensure you have Rust installed. If not, you can install it from [rust-lang.org](https://www.rust-lang.org/).
