@@ -8,6 +8,15 @@
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-extra/features/apt-packages:1": {},
 		"ghcr.io/devcontainers-extra/features/curl-apt-get:1": {}
+	},
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"tamasfe.even-better-toml",
+				"rust-lang.rust-analyzer"
+			]
+		}
 	}
 
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
